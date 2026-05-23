@@ -27,6 +27,8 @@ Installing web UI as a PWA:
     Safari: "Share button" -> "Add to Home Screen"
     Chrome: "Menu button" -> "Add to Home Screen"
 
+Fun fact: First version was written using Flask.
+
 Demo (where you see how web UI looks):
 https://jaraslau.github.io/sonia-emu/ 
 
