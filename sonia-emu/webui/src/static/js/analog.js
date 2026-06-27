@@ -4,6 +4,7 @@ class AnalogController {
     this.triggers = [];
     this.pending = new Map();
     this.flushPending = false;
+    this.controller = window.__soniaController ?? null;
     this.init();
   }
 
@@ -13,7 +14,13 @@ class AnalogController {
   }
 
   connectWebSocket() {
-    this.socket = new WebSocket(`ws://${location.host}/ws`);
+    if (this.controller) {
+      this.socket = this.controller.socket;
+      return;
+    }
+
+    const wsScheme = location.protocol === "https:" ? "wss:" : "ws:";
+    this.socket = new WebSocket(`${wsScheme}//${location.host}/ws`);
     this.socket.onopen = () => console.log("WebSocket connected");
     this.socket.onerror = (err) => console.error("WebSocket error:", err);
     this.socket.onclose = () => {
@@ -29,6 +36,11 @@ class AnalogController {
   }
 
   send(data) {
+    if (this.controller) {
+      this.controller.send(data);
+      return;
+    }
+
     this.pending.set(`${data.type}:${data.id}`, data);
     if (!this.flushPending) {
       this.flushPending = true;
@@ -45,25 +57,38 @@ class AnalogController {
   }
 
   _send(data) {
-    const AXIS_RANGE = 512;
-    const PREFIX = { button: 0x62, joystick: 0x6a, trigger: 0x6a };
-    const val =
-      data.type !== "button" ? Math.round(data.value * AXIS_RANGE) : data.value;
-
-    const buf = new ArrayBuffer(6);
-    const view = new DataView(buf);
-    view.setUint8(0, PREFIX[data.type]);
-    view.setUint8(1, data.id);
-    view.setInt32(2, val, false);
+    const payload = {
+      type: data.type,
+      id: data.id,
+      value: data.value,
+    };
+    const encode = window.__soniaPackInput;
+    const buf = encode ? encode(payload) : null;
 
     if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(buf);
+      if (buf) {
+        this.socket.send(buf);
+      } else {
+        console.error("No packet encoder available");
+      }
     } else {
-      fetch("/fallback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }).catch((err) => console.error("Fallback error:", err));
+      if (window.__soniaSendFallback) {
+        window
+          .__soniaSendFallback(payload)
+          .catch((err) => console.error("Fallback error:", err));
+      } else {
+        fetch("/fallback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error(`fallback request failed: ${res.status}`);
+            }
+          })
+          .catch((err) => console.error("Fallback error:", err));
+      }
     }
   }
 }

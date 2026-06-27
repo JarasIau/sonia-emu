@@ -1,9 +1,40 @@
+const AXIS_RANGE = 512;
+const PREFIX = { button: 0x62, joystick: 0x6a, trigger: 0x6a };
+
+if (!window.__soniaPackInput) {
+  window.__soniaPackInput = (data) => {
+    const val =
+      data.type !== "button" ? Math.round(data.value * AXIS_RANGE) : data.value;
+    const buf = new ArrayBuffer(6);
+    const view = new DataView(buf);
+    view.setUint8(0, PREFIX[data.type]);
+    view.setUint8(1, data.id);
+    view.setInt32(2, val, false);
+    return buf;
+  };
+}
+
+if (!window.__soniaSendFallback) {
+  window.__soniaSendFallback = (payload) =>
+    fetch("/fallback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then((res) => {
+      if (!res.ok) {
+        throw new Error(`fallback request failed: ${res.status}`);
+      }
+    });
+}
+
 class GameController {
   constructor() {
-    this.socket = null;
+    this.socket = window.__soniaSocket ?? null;
     this.joysticks = new Map();
     this.pending = new Map();
     this.flushPending = false;
+    window.__soniaController = this;
+    window.__soniaSend = (data) => this.send(data);
     this.init();
   }
 
@@ -14,11 +45,15 @@ class GameController {
   }
 
   connectWebSocket() {
-    this.socket = new WebSocket(`ws://${location.host}/ws`);
+    if (this.socket !== null) return;
+    const wsScheme = location.protocol === "https:" ? "wss:" : "ws:";
+    this.socket = new WebSocket(`${wsScheme}//${location.host}/ws`);
+    window.__soniaSocket = this.socket;
     this.socket.onopen = () => console.log("WebSocket connected");
     this.socket.onerror = (err) => console.error("WebSocket error:", err);
     this.socket.onclose = () => {
       console.log("WebSocket closed, reconnecting in 2s...");
+      window.__soniaSocket = null;
       setTimeout(() => this.connectWebSocket(), 2000);
     };
   }
@@ -80,25 +115,24 @@ class GameController {
   }
 
   _send(data) {
-    const AXIS_RANGE = 512;
-    const PREFIX = { button: 0x62, joystick: 0x6a, trigger: 0x6a };
-    const val =
-      data.type !== "button" ? Math.round(data.value * AXIS_RANGE) : data.value;
+    const payload = {
+      type: data.type,
+      id: data.id,
+      value: data.value,
+    };
+    const encode = window.__soniaPackInput;
+    const buf = encode ? encode(payload) : null;
 
-    const buf = new ArrayBuffer(6);
-    const view = new DataView(buf);
-    view.setUint8(0, PREFIX[data.type]);
-    view.setUint8(1, data.id);
-    view.setInt32(2, val, false);
+    if (!buf && this.socket?.readyState !== WebSocket.OPEN) {
+      return;
+    }
 
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(buf);
     } else {
-      fetch("/fallback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }).catch((err) => console.error("Fallback error:", err));
+      window
+        .__soniaSendFallback(payload)
+        .catch((err) => console.error("Fallback error:", err));
     }
   }
 }
@@ -111,6 +145,9 @@ class Joystick {
     this.controller = controller;
     this.touchId = null;
     this.maxDistance = 0;
+    this.centerX = 0;
+    this.centerY = 0;
+    this.invMaxDistance = 1;
 
     this.waitForLayout(() => this.attachListeners());
   }
@@ -127,9 +164,7 @@ class Joystick {
   }
 
   attachListeners() {
-    const containerRadius = this.container.offsetWidth / 2;
-    const stickRadius = this.stick.offsetWidth / 2;
-    this.maxDistance = containerRadius - stickRadius;
+    this.updateGeometry();
 
     this.container.addEventListener("touchstart", (e) => this.start(e), {
       passive: false,
@@ -139,6 +174,17 @@ class Joystick {
     });
     document.addEventListener("touchend", (e) => this.end(e));
     document.addEventListener("touchcancel", (e) => this.end(e));
+    window.addEventListener("resize", () => this.updateGeometry());
+  }
+
+  updateGeometry() {
+    const rect = this.container.getBoundingClientRect();
+    const stickRadius = this.stick.offsetWidth / 2;
+    const containerRadius = rect.width / 2;
+    this.maxDistance = Math.max(0, containerRadius - stickRadius);
+    this.invMaxDistance = this.maxDistance === 0 ? 0 : 1 / this.maxDistance;
+    this.centerX = rect.left + rect.width / 2;
+    this.centerY = rect.top + rect.height / 2;
   }
 
   start(e) {
@@ -154,14 +200,12 @@ class Joystick {
     const touch = this.getTouchById(e.changedTouches);
     if (!touch) return;
 
-    const rect = this.container.getBoundingClientRect();
-    const deltaX = touch.clientX - (rect.left + rect.width / 2);
-    const deltaY = touch.clientY - (rect.top + rect.height / 2);
+    if (this.invMaxDistance === 0) return;
 
-    const distance = Math.min(
-      Math.sqrt(deltaX * deltaX + deltaY * deltaY),
-      this.maxDistance,
-    );
+    const deltaX = touch.clientX - this.centerX;
+    const deltaY = touch.clientY - this.centerY;
+
+    const distance = Math.min(Math.hypot(deltaX, deltaY), this.maxDistance);
     const angle = Math.atan2(deltaY, deltaX);
     const offsetX = Math.cos(angle) * distance;
     const offsetY = Math.sin(angle) * distance;
@@ -171,12 +215,12 @@ class Joystick {
     this.controller.send({
       type: "joystick",
       id: this.config.xId,
-      value: offsetX / this.maxDistance,
+      value: offsetX * this.invMaxDistance,
     });
     this.controller.send({
       type: "joystick",
       id: this.config.yId,
-      value: offsetY / this.maxDistance,
+      value: offsetY * this.invMaxDistance,
     });
   }
 
@@ -214,5 +258,7 @@ class Joystick {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  new GameController();
+  if (!window.__soniaController) {
+    new GameController();
+  }
 });

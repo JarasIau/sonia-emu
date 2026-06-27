@@ -39,7 +39,7 @@ def main(args: Namespace) -> None:
             f"This program was written specifically for Linux.\n"
             f"Input events won't work on {sys.platform}."
         )
-    os.environ["SOCKET_PATH"] = args.socket
+    os.environ["SOCK_PATH"] = args.socket
     uvicorn.run(
         "webui:app",
         port=args.port,
