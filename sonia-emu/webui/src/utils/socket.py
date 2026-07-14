@@ -71,6 +71,16 @@ class Socket:
                 logger.info(f"Connected to {self.sock_path}")
 
     async def sendall(self, data: bytes) -> None:
-        if self.writer is not None:
+        if self.writer is None:
+            await self.connect()
+
+        if self.writer is None:
+            raise ConnectionError("Socket not connected")
+
+        try:
             self.writer.write(data)
             await self.writer.drain()
+        except Exception as e:
+            logger.error(f"Write failed, reconnecting due to: {e}")
+            await self.close()
+            raise

@@ -4,7 +4,14 @@ import logging
 import struct
 from contextlib import asynccontextmanager
 from typing import Literal, ClassVar, AsyncGenerator, Annotated, cast
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect, Depends
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+    Depends,
+)
 from fastapi.responses import HTMLResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -70,11 +77,12 @@ SocketDep = Annotated[Socket, Depends(get_sock)]
 
 
 async def send_data(input_data: InputData, sock: Socket) -> None:
+    packet = input_data.to_bytes()
     try:
-        packet = input_data.to_bytes()
         await sock.sendall(packet)
     except Exception as e:
         logger.error(e)
+        raise HTTPException(status_code=503, detail="failed_to_send_input")
 
 
 @app.post("/fallback", status_code=200)

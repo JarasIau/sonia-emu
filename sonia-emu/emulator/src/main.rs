@@ -54,20 +54,32 @@ fn handle_client(
         match reader.read_exact(&mut buffer) {
             Ok(_) => {
                 if let Some(packet) = utils::packet::Packet::from_bytes(buffer) {
+                    let mut handled = false;
+
                     match packet.prefix {
                         b'b' => {
-                            joystick.button_press(button_map(packet.input_id), packet.value != 0)?
+                            if let Some(button) = button_map(packet.input_id) {
+                                joystick.button_press(button, packet.value != 0)?;
+                                handled = true;
+                            }
                         }
-                        b'j' => joystick.move_axis(axis_map(packet.input_id), packet.value)?,
+                        b'j' => {
+                            if let Some(axis) = axis_map(packet.input_id) {
+                                joystick.move_axis(axis, packet.value)?;
+                                handled = true;
+                            }
+                        }
                         _ => {}
+                    }
+
+                    if handled {
+                        joystick.synchronise()?;
                     }
                 }
             }
             Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
             Err(e) => return Err(Box::new(e)),
         }
-
-        joystick.synchronise()?;
     }
 
     Ok(())
@@ -102,17 +114,11 @@ const AXIS_MAP: [joystick::Axis; 6] = {
 };
 
 #[inline(always)]
-fn button_map(i: u8) -> joystick::Button {
-    BUTTON_MAP
-        .get(i as usize)
-        .copied()
-        .unwrap_or(joystick::Button::Guide)
+fn button_map(i: u8) -> Option<joystick::Button> {
+    BUTTON_MAP.get(i as usize).copied()
 }
 
 #[inline(always)]
-fn axis_map(i: u8) -> joystick::Axis {
-    AXIS_MAP
-        .get(i as usize)
-        .copied()
-        .unwrap_or(joystick::Axis::X)
+fn axis_map(i: u8) -> Option<joystick::Axis> {
+    AXIS_MAP.get(i as usize).copied()
 }
