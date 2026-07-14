@@ -3,6 +3,7 @@
   const DEFAULTS = {
     backgroundColor: "#333333",
     controlColor: "#ffffff",
+    chainEnabled: true,
     layout: null,
   };
 
@@ -96,6 +97,7 @@
     const backgroundColor =
       settings.backgroundColor || DEFAULTS.backgroundColor;
     const palette = derivePalette(backgroundColor);
+    const chainEnabled = settings.chainEnabled !== false;
 
     document.documentElement.style.setProperty(
       "--background-color",
@@ -125,6 +127,7 @@
       "--editor-panel-color",
       palette.editorPanel,
     );
+    document.documentElement.classList.toggle("chain-disabled", !chainEnabled);
   }
 
   function applyLayout(layout) {

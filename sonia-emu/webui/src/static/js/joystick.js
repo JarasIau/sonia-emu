@@ -193,6 +193,7 @@ class Joystick {
     if (!touch) return;
     this.touchId = touch.identifier;
     this.stick.style.transition = "none";
+    this.container.classList.add("joystick-active");
   }
 
   move(e) {
@@ -210,6 +211,8 @@ class Joystick {
     const offsetX = Math.cos(angle) * distance;
     const offsetY = Math.sin(angle) * distance;
 
+    this.container.style.setProperty("--chain-distance", `${distance}px`);
+    this.container.style.setProperty("--chain-angle", `${angle}rad`);
     this.stick.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
 
     this.controller.send({
@@ -228,6 +231,9 @@ class Joystick {
     const touch = this.getTouchById(e.changedTouches);
     if (!touch) return;
     this.touchId = null;
+    this.container.classList.remove("joystick-active");
+    this.container.style.setProperty("--chain-distance", "0px");
+    this.container.style.setProperty("--chain-angle", "0rad");
     this.stick.style.transition = "transform 0.2s ease-out";
     this.stick.style.transform = "translate(-50%, -50%)";
     this.controller.send({ type: "joystick", id: this.config.xId, value: 0 });

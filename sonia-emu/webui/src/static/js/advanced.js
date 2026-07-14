@@ -11,6 +11,7 @@
       );
       this.backgroundInput = document.getElementById("background-color");
       this.controlInput = document.getElementById("control-color");
+      this.chainToggle = document.getElementById("chain-toggle");
       this.resetLayoutButton = document.getElementById("reset-layout");
       this.resetEditorLayoutButton = document.getElementById(
         "reset-editor-layout",
@@ -32,11 +33,13 @@
       const stored = this.settings.read();
       this.backgroundInput.value = stored.backgroundColor;
       this.controlInput.value = stored.controlColor;
+      this.chainToggle.checked = stored.chainEnabled !== false;
 
       this.layout = stored.layout || this.defaultLayout();
 
       this.bindColorInput(this.backgroundInput, "backgroundColor");
       this.bindColorInput(this.controlInput, "controlColor");
+      this.bindChainToggle();
       this.bindEditorButtons();
       this.bindResetButtons();
     }
@@ -54,6 +57,12 @@
     bindColorInput(input, key) {
       input.addEventListener("input", () => {
         this.settings.save({ [key]: input.value });
+      });
+    }
+
+    bindChainToggle() {
+      this.chainToggle.addEventListener("change", () => {
+        this.settings.save({ chainEnabled: this.chainToggle.checked });
       });
     }
 

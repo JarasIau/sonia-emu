@@ -46,6 +46,58 @@ body {
   background-color: var(--surface-color);
   border: 2px solid var(--control-color);
   border-radius: 50%;
+  --chain-distance: 0px;
+  --chain-angle: 0rad;
+}
+
+.joystick-container::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--chain-distance);
+  height: 28px;
+  background:
+    radial-gradient(
+      circle at 8% 50%,
+      var(--control-color) 0 2px,
+      transparent 2.6px
+    ),
+    radial-gradient(
+      circle at 22% 50%,
+      var(--control-color) 0 3px,
+      transparent 3.7px
+    ),
+    radial-gradient(
+      circle at 42% 50%,
+      var(--control-color) 0 4.2px,
+      transparent 5px
+    ),
+    radial-gradient(
+      circle at 66% 50%,
+      var(--control-color) 0 5.5px,
+      transparent 6.4px
+    ),
+    radial-gradient(
+      circle at 94% 50%,
+      var(--control-color) 0 7px,
+      transparent 8px
+    );
+  background-repeat: no-repeat;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) rotate(var(--chain-angle));
+  transform-origin: left center;
+  transition: opacity 0.08s linear;
+  z-index: 4;
+}
+
+.joystick-container.joystick-active::after {
+  opacity: 0.62;
+}
+
+.chain-disabled .joystick-container::after {
+  display: none;
 }
 
 .joystick {
@@ -338,6 +390,18 @@ html {
   display: flex;
   justify-content: space-between;
   width: 100%;
+}
+
+.toggle-control {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.toggle-control input {
+  height: 24px;
+  width: 24px;
 }
 
 .color-control input {
