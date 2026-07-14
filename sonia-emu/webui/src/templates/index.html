@@ -32,65 +32,11 @@
         <input type="checkbox" id="analog-toggle" />
         <span>Analog Triggers</span>
       </label>
+      <a class="advanced-link" href="/advanced">Advanced Settings</a>
     </div>
-    <div id="joysticks">
-      <div id="left-joystick-container" class="joystick-container">
-        <div class="joystick" id="left-joystick"></div>
-        <button class="button joystick-button left-north" data-id="0">↑</button>
-        <button class="button joystick-button left-west" data-id="1">←</button>
-        <button class="button joystick-button left-east" data-id="2">→</button>
-        <button class="button joystick-button left-south" data-id="3">↓</button>
-      </div>
-      <div id="top-special-buttons">
-        <button class="button left-special" data-id="6">◱</button>
-        <button class="button guide" data-id="16">✘</button>
-        <button class="button right-special" data-id="4">≡</button>
-      </div>
+    {% include "_controls.html" %}
 
-      <div id="top-buttons">
-        <div
-          class="button-group trigger-group analog-trigger"
-          style="display: none"
-        >
-          <div class="trigger-slider l2-slider" data-id="4">
-            <div class="trigger-thumb"></div>
-          </div>
-          <button class="button l1" data-id="13">L1</button>
-        </div>
-        <div
-          class="button-group trigger-group analog-trigger"
-          style="display: none"
-        >
-          <div class="trigger-slider r2-slider" data-id="5">
-            <div class="trigger-thumb"></div>
-          </div>
-          <button class="button r1" data-id="11">R1</button>
-        </div>
-        <div class="button-group button-trigger">
-          <button class="button l2" data-id="4">L2</button>
-          <button class="button l1" data-id="13">L1</button>
-        </div>
-        <div class="button-group button-trigger">
-          <button class="button r2" data-id="5">R2</button>
-          <button class="button r1" data-id="11">R1</button>
-        </div>
-      </div>
-
-      <div id="right-joystick-container" class="joystick-container">
-        <div class="joystick" id="right-joystick"></div>
-        <button class="button joystick-button right-south" data-id="5">
-          A
-        </button>
-        <button class="button joystick-button right-east" data-id="7">B</button>
-        <button class="button joystick-button right-west" data-id="8">X</button>
-        <button class="button joystick-button right-north" data-id="9">
-          Y
-        </button>
-      </div>
-      <button class="button corner-button left-corner" data-id="15">L3</button>
-      <button class="button corner-button right-corner" data-id="14">R3</button>
-    </div>
-
+    <script src="{{ url_for('static', path='js/settings.js') }}"></script>
     <script src="{{ url_for('static', path='js/joystick.js') }}"></script>
     <script src="{{ url_for('static', path='js/options.js') }}"></script>
     <script src="{{ url_for('static', path='js/analog.js') }}"></script>

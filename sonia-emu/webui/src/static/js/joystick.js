@@ -179,9 +179,9 @@ class Joystick {
 
   updateGeometry() {
     const rect = this.container.getBoundingClientRect();
-    const stickRadius = this.stick.offsetWidth / 2;
     const containerRadius = rect.width / 2;
-    this.maxDistance = Math.max(0, containerRadius - stickRadius);
+    const stickRadius = this.stick.offsetWidth / 2;
+    this.maxDistance = Math.max(0, containerRadius + stickRadius);
     this.invMaxDistance = this.maxDistance === 0 ? 0 : 1 / this.maxDistance;
     this.centerX = rect.left + rect.width / 2;
     this.centerY = rect.top + rect.height / 2;

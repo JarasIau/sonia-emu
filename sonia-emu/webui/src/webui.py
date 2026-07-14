@@ -108,3 +108,8 @@ async def handle_websocket(websocket: WebSocket) -> None:
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request=request, name="index.html")
+
+
+@app.get("/advanced", response_class=HTMLResponse)
+async def advanced(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request=request, name="advanced.html")

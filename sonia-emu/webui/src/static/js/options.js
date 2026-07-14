@@ -22,7 +22,9 @@ class ControllerOptions {
     this.setDisplay(this.analogTriggers, isAnalog ? "flex" : "none");
     this.setDisplay(this.digitalTriggers, isAnalog ? "none" : "flex");
 
-    this.topButtons.style.top = isAnalog ? "-10%" : "10%";
+    if (!this.topButtons.closest(".custom-layout")) {
+      this.topButtons.style.top = isAnalog ? "-10%" : "10%";
+    }
   }
 
   setDisplay(elements, value) {

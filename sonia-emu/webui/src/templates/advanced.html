@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>SoniaEmu Advanced Settings</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='css/style.css') }}"
+    />
+  </head>
+  <body class="advanced-page">
+    <main id="advanced-settings">
+      <section class="settings-menu" aria-label="Advanced settings">
+        <nav class="settings-nav" aria-label="Navigation">
+          <a class="back-link" href="/">Back</a>
+        </nav>
+        <button id="open-control-editor" class="settings-option" type="button">
+          <span>Control editor</span>
+          <span aria-hidden="true">›</span>
+        </button>
+        <div class="settings-option color-option">
+          <label class="color-control" for="background-color">
+            <span>Background</span>
+            <input id="background-color" type="color" value="#333333" />
+          </label>
+        </div>
+        <div class="settings-option color-option">
+          <label class="color-control" for="control-color">
+            <span>Joysticks</span>
+            <input id="control-color" type="color" value="#ffffff" />
+          </label>
+        </div>
+        <button id="reset-theme" class="settings-option" type="button">
+          <span>Reset colors</span>
+        </button>
+        <button id="reset-layout" class="settings-option" type="button">
+          <span>Reset layout</span>
+        </button>
+      </section>
+      <section id="control-editor" aria-label="Control editor" hidden>
+        <div class="editor-toolbar">
+          <button
+            id="close-control-editor"
+            class="settings-button"
+            type="button"
+          >
+            Done
+          </button>
+          <button
+            id="reset-editor-layout"
+            class="settings-button"
+            type="button"
+          >
+            Reset
+          </button>
+        </div>
+        <div class="editor-rotate-overlay">
+          <p>Please rotate your device to landscape mode.</p>
+          <button
+            id="cancel-control-editor"
+            class="settings-button"
+            type="button"
+          >
+            Cancel editing
+          </button>
+        </div>
+        {% include "_controls.html" %}
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', path='js/settings.js') }}"></script>
+    <script src="{{ url_for('static', path='js/advanced.js') }}"></script>
+  </body>
+</html>
