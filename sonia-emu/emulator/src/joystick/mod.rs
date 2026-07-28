@@ -20,7 +20,7 @@ impl Joystick {
 
     #[inline]
     pub fn device_path(&self) -> io::Result<path::PathBuf> {
-        Ok(self.device.evdev_path()?)
+        self.device.evdev_path()
     }
 
     #[inline]
