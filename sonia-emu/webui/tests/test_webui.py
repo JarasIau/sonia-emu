@@ -2,9 +2,8 @@ import asyncio
 import struct
 
 import pytest
-from fastapi import HTTPException
-
 import webui
+from fastapi import HTTPException
 
 
 def run_async(coro):

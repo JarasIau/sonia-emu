@@ -1,7 +1,6 @@
 import asyncio
 
 import pytest
-
 from utils.socket import Socket
 
 

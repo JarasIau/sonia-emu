@@ -18,7 +18,6 @@ from fastapi.responses import HTMLResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-
 from utils.socket import Socket
 
 logger = logging.getLogger(__name__)
