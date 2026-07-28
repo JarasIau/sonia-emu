@@ -1,21 +1,24 @@
-import os
-import orjson
 import logging
+import os
 import struct
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Literal, ClassVar, AsyncGenerator, Annotated, cast
+from typing import Annotated, ClassVar, Literal, cast
+
+import orjson
 from fastapi import (
+    Depends,
     FastAPI,
     HTTPException,
     Request,
     WebSocket,
     WebSocketDisconnect,
-    Depends,
 )
 from fastapi.responses import HTMLResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+
 from utils.socket import Socket
 
 logger = logging.getLogger(__name__)
@@ -48,8 +51,6 @@ templates = Jinja2Templates(directory="templates")
 
 
 class InputData(BaseModel):
-    """Data wrapper for parsing JSON on fallback"""
-
     AXIS_RANGE: ClassVar[int] = 512
     PREFIX_MAP: ClassVar[dict[str, bytes]] = {
         "button": ord(b"b"),
@@ -80,7 +81,7 @@ async def send_data(input_data: InputData, sock: Socket) -> None:
     packet = input_data.to_bytes()
     try:
         await sock.sendall(packet)
-    except Exception as e:
+    except OSError as e:
         logger.error(e)
         raise HTTPException(status_code=503, detail="failed_to_send_input")
 
@@ -101,7 +102,7 @@ async def handle_websocket(websocket: WebSocket) -> None:
             await sock.sendall(data)
     except WebSocketDisconnect:
         logger.warning("Websocket disconnected, running on fallback")
-    except Exception as e:
+    except OSError as e:
         logger.error(e)
 
 

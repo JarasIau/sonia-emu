@@ -8,11 +8,23 @@
 :root {
   --background-color: #333333;
   --control-color: #ffffff;
-  --button-color: #555555;
-  --button-active-color: #333333;
-  --surface-color: rgba(255, 255, 255, 0.1);
-  --trigger-track-color: #444444;
-  --editor-panel-color: rgba(20, 20, 20, 0.88);
+  --button-color: color-mix(
+    in srgb,
+    var(--background-color),
+    var(--control-color) 18%
+  );
+  --button-active-color: color-mix(in srgb, var(--background-color), #000 12%);
+  --surface-color: color-mix(in srgb, var(--background-color) 72%, transparent);
+  --trigger-track-color: color-mix(
+    in srgb,
+    var(--background-color),
+    var(--control-color) 12%
+  );
+  --editor-panel-color: color-mix(
+    in srgb,
+    var(--background-color) 88%,
+    transparent
+  );
 }
 
 body {

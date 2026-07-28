@@ -1,5 +1,0 @@
-fastapi
-jinja2
-orjson
-tenacity
-uvicorn[standard]

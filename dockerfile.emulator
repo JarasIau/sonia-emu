@@ -2,10 +2,6 @@ FROM rust:1-slim AS builder
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    pkg-config \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY sonia-emu/emulator/Cargo.toml sonia-emu/emulator/Cargo.lock ./
 
 COPY sonia-emu/emulator/src ./src
@@ -15,10 +11,6 @@ RUN cargo build --release
 FROM debian:bookworm-slim AS runtime
 
 WORKDIR /app
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
 
 ARG INPUT_GID
 RUN groupadd -g ${INPUT_GID} input && \

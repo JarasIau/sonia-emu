@@ -1,38 +1,35 @@
 mod axis;
 mod button;
-mod error;
 
 pub use axis::Axis;
 pub use button::Button;
-pub use error::Error;
 
 use input_linux::sys;
 
-use std::{fs, path};
+use std::{fs, io, path};
 
 pub struct Joystick {
     device: input_linux::UInputHandle<fs::File>,
 }
 
 impl Joystick {
-    pub fn new() -> Result<Self, Error> {
+    pub fn new() -> io::Result<Self> {
         let device = create_joystick_device()?;
         Ok(Joystick { device })
     }
 
     #[inline]
-    pub fn device_path(&self) -> Result<path::PathBuf, Error> {
+    pub fn device_path(&self) -> io::Result<path::PathBuf> {
         Ok(self.device.evdev_path()?)
     }
 
     #[inline]
-    pub fn move_axis(&self, axis: Axis, position: i32) -> Result<(), Error> {
+    pub fn move_axis(&self, axis: Axis, position: i32) -> io::Result<()> {
         if !(-512..=512).contains(&position) {
-            return Err(Error::OutOfRangeError {
-                min: -512,
-                max: 512,
-                actual: position,
-            });
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("axis position {position} outside -512..=512"),
+            ));
         }
 
         self.write_event(input_linux::AbsoluteEvent::new(
@@ -43,7 +40,7 @@ impl Joystick {
     }
 
     #[inline]
-    pub fn button_press(&self, button: Button, is_pressed: bool) -> Result<(), Error> {
+    pub fn button_press(&self, button: Button, is_pressed: bool) -> io::Result<()> {
         let value = if is_pressed {
             input_linux::KeyState::PRESSED
         } else {
@@ -58,21 +55,20 @@ impl Joystick {
     }
 
     #[inline]
-    pub fn synchronise(&self) -> Result<(), Error> {
+    pub fn synchronise(&self) -> io::Result<()> {
         self.write_event(input_linux::SynchronizeEvent::report(EVENT_TIME))
     }
 
     #[inline(always)]
-    fn write_event(&self, event: impl std::convert::AsRef<sys::input_event>) -> Result<(), Error> {
+    fn write_event(&self, event: impl std::convert::AsRef<sys::input_event>) -> io::Result<()> {
         self.device.write(&[*event.as_ref()])?;
         Ok(())
     }
 }
 
-// Const event time to avoid repeated allocations
 const EVENT_TIME: input_linux::EventTime = input_linux::EventTime::new(0, 0);
 
-fn create_joystick_device() -> Result<input_linux::UInputHandle<fs::File>, Error> {
+fn create_joystick_device() -> io::Result<input_linux::UInputHandle<fs::File>> {
     let uinput_file = fs::File::create("/dev/uinput")?;
     let device = input_linux::UInputHandle::new(uinput_file);
 

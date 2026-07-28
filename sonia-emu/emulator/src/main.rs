@@ -3,7 +3,6 @@ use std::os::unix::net::UnixListener;
 use std::{env, error};
 
 mod joystick;
-mod utils;
 
 fn main() -> Result<(), Box<dyn error::Error>> {
     let joystick = joystick::Joystick::new()?;
@@ -53,28 +52,27 @@ fn handle_client(
     loop {
         match reader.read_exact(&mut buffer) {
             Ok(_) => {
-                if let Some(packet) = utils::packet::Packet::from_bytes(buffer) {
-                    let mut handled = false;
-
-                    match packet.prefix {
-                        b'b' => {
-                            if let Some(button) = button_map(packet.input_id) {
-                                joystick.button_press(button, packet.value != 0)?;
-                                handled = true;
-                            }
+                let value = i32::from_be_bytes([buffer[2], buffer[3], buffer[4], buffer[5]]);
+                let handled = match buffer[0] {
+                    b'b' => match BUTTON_MAP.get(buffer[1] as usize).copied() {
+                        Some(button) => {
+                            joystick.button_press(button, value != 0)?;
+                            true
                         }
-                        b'j' => {
-                            if let Some(axis) = axis_map(packet.input_id) {
-                                joystick.move_axis(axis, packet.value)?;
-                                handled = true;
-                            }
+                        None => false,
+                    },
+                    b'j' => match AXIS_MAP.get(buffer[1] as usize).copied() {
+                        Some(axis) => {
+                            joystick.move_axis(axis, value)?;
+                            true
                         }
-                        _ => {}
-                    }
+                        None => false,
+                    },
+                    _ => false,
+                };
 
-                    if handled {
-                        joystick.synchronise()?;
-                    }
+                if handled {
+                    joystick.synchronise()?;
                 }
             }
             Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
@@ -112,13 +110,3 @@ const AXIS_MAP: [joystick::Axis; 6] = {
     use joystick::Axis::*;
     [X, Y, RX, RY, Z, RZ]
 };
-
-#[inline(always)]
-fn button_map(i: u8) -> Option<joystick::Button> {
-    BUTTON_MAP.get(i as usize).copied()
-}
-
-#[inline(always)]
-fn axis_map(i: u8) -> Option<joystick::Axis> {
-    AXIS_MAP.get(i as usize).copied()
-}

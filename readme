@@ -16,12 +16,8 @@ Run via Docker ("input" group has to be set up):
     docker-compose build
     docker-compose up
 OR
-Run via 2 separate instances on the host machine:
-    (in emulator/)
-        cargo run <optionally - a custom path to a unix socket>
-    (in webui/src):
-    Create a venv and install requirements using pip or poetry, then:
-        python run.py <optional arguments>
+Run on the host machine:
+    sh run-local.sh
 
 Installing web UI as a PWA:
     Safari: "Share button" -> "Add to Home Screen"
