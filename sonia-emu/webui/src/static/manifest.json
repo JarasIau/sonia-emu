@@ -3,8 +3,8 @@
   "name": "Emulate gamepad input on linux using a mobile device",
   "icons": [
     {
-      "src": "icons/512.png",
-      "type": "image/png",
+      "src": "icons/512.webp",
+      "type": "image/webp",
       "sizes": "512x512"
     }
   ],
